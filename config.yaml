@@ -1,0 +1,33 @@
+SERVER:
+  # IP and Port for the server to bind to
+  IP: 0.0.0.0
+  PORT: 5000
+  # IP and Port of the Temperature server
+  TSIP: 127.0.0.1
+  TSPORT: 5000
+  # How often to check for changes in temperature
+  POLLTIME: 2
+  # The change in temperature before reporting the change
+  DELTA: 0.2
+
+CLIENT:
+  # IP and Port where the server has bound
+  IP: 0.0.0.0
+  PORT: 5000
+
+TESTSERVER:
+  # IP and Port for the server to bind to
+  IP: 0.0.0.0
+  PORT: 5000
+  # IP and Port of the Temperature server
+  TSIP: 127.0.0.1
+  TSPORT: 5000
+  # How often to check for changes in temperature
+  POLLTIME: 2
+  # The change in temperature before reporting the change
+  DELTA: 0.2
+
+TESTCLIENT:
+  # IP and Port where the server has bound
+  IP: 0.0.0.0
+  PORT: 5000
