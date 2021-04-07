@@ -17,7 +17,7 @@ client:
 
 test:
 	. env/bin/activate
-	python3 src/main/Temperature.py client
+	python3 src/test/Server_UnitTest.py
 
 clean:
 	rm -rf $(PROJECT)

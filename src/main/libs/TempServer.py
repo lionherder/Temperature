@@ -34,7 +34,6 @@ class TempServer(object):
     Check if the temperature has changed enough to push out another
     update
     '''
-
     def update_temp(self):
         '''
         url = "https://community-open-weather-map.p.rapidapi.com/weather"
@@ -55,7 +54,7 @@ class TempServer(object):
 
         temp = resp['main']['temp']
 
-        if (abs(time.time() - self.lastTemp) > self.DELTA):
+        if (abs(temp - self.lastTemp) > self.DELTA):
             self.lastTemp = temp
             return True
         return False
@@ -73,12 +72,11 @@ class TempServer(object):
         while True:
             # Check for change in time
             doUpdate = self.update_temp()
-            msg = "{} @ {}".format(self.lastTemp, time.ctime())
+            msg = "{} @ {}\n".format(self.lastTemp, time.ctime())
             
             # Check for any new connections
             print("Checking for new connections")
             (readable, writable, exceptional) = select.select([ss],[],[], 0)
-            # print(len(readable), len(writable), len(exceptional))
             for newConn in readable:
                 (conn, addr) = ss.accept()
                 conn.setblocking(0)
@@ -90,7 +88,6 @@ class TempServer(object):
             for conn in self.input_conns:
                 print("Checking connection: " + str(conn))
                 (readable, writable, exceptional) = select.select([conn],[conn],[conn], 0)
-                # print(len(readable), len(writable), len(exceptional))
                 # If it's exceptional, kill the connection
                 if (len(exceptional) > 0):
                     print("Client disconnected")
@@ -98,19 +95,24 @@ class TempServer(object):
                     conn.close()
                     continue
                 
-                # We should only get readable data on client
-                # disconnect.  If we do get data, toss it
+                # This could be a disconnect, or a command.  Handle
+                # it.
                 if (len(readable) > 0):
-                    data = conn.recv(1024)
+                    data = conn.recv(1024).decode()
                     if (len(data) == 0):
                         print("Client disconnected")
                         self.input_conns.remove(conn)
                         conn.close()
                         continue
                     else:
-                        if (data.index("PUSH")):
+                        print("Got data: {}".format(data))
+                        if (data.find("PUSH") > -1):
                             (command, temp) = data.split(" ")
-                        print(command, temp)
+                            self.lastTemp = int(temp)
+                            print("{} -> {}".format(command, temp))
+                        elif (data.find("SHUTDOWN") > -1):
+                            print(data)
+                            return
 
                 # Check if the connection is writable.  If it's all
                 # good, write the data

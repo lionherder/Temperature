@@ -25,7 +25,7 @@ TESTSERVER:
   # How often to check for changes in temperature
   POLLTIME: 2
   # The change in temperature before reporting the change
-  DELTA: 0.2
+  DELTA: 5.0
 
 TESTCLIENT:
   # IP and Port where the server has bound

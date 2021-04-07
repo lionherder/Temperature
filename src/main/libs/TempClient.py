@@ -11,6 +11,8 @@ class TempClient(object):
         self.IP = ip
         self.PORT = port
 
+        self.currentTemp = 0.0
+
     def start(self):
         # Set up the socket stuff
         ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -19,11 +21,16 @@ class TempClient(object):
 
         # All we really need to do here is check for incoming data.
         while True:
-            data = ss.recv(100)
+            data = ss.recv(100).decode()
             if (len(data) == 0):
                 print("Server disconnected.  Shutting down.")
                 ss.close()
                 return
+
+            (temp, timestamp) = data.split("@")
+            print(temp)
                 
-            print(data.decode())
             time.sleep(1)
+
+    def getCurrentTemp(self):
+        return self.currentTemp
