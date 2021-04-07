@@ -7,13 +7,17 @@ develop: requirements.txt
 	$(BIN)pip install --upgrade pip
 	$(BIN)pip install -r requirements.txt
 
-server:
+server: 
 	. env/bin/activate
-	python3 src/Temperature.py server 
+	python3 src/main/Temperature.py server 
 
-client:
+client: 
 	. env/bin/activate
-	python3 src/Temperature.py client 
+	python3 src/main/Temperature.py client
+
+test:
+	. env/bin/activate
+	python3 src/main/Temperature.py client
 
 clean:
 	rm -rf $(PROJECT)
