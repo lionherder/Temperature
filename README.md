@@ -64,3 +64,19 @@ In server mode, we need to know the ip:port to bind to.
 The host:port of the temperature server.
 How often to poll the temperature server.
 What change in temperature to report.
+
+## Notes
+
+Most of the time, I start a server using Make.  Then use netcat to interact with the server, modify the current temperature and shutdown the server.
+```
+netcat localhost 5000
+```
+
+From netcat, there are two commands handled by the server:
+```
+PUSH <temp>
+```
+and
+```
+SHUTDOWN
+```
