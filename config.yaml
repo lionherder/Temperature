@@ -11,12 +11,12 @@ SERVER:
   DELTA: 0.2
 
 CLIENT:
-  # IP and Port where the server has bound
+  # IP and Port where the server is bound
   IP: 0.0.0.0
   PORT: 5000
 
 TESTSERVER:
-  # IP and Port for the server to bind to
+  # IP and Port for the test server to bind to
   IP: 0.0.0.0
   PORT: 5000
   # IP and Port of the Temperature server
@@ -28,6 +28,6 @@ TESTSERVER:
   DELTA: 5.0
 
 TESTCLIENT:
-  # IP and Port where the server has bound
+  # IP and Port where the server is bound
   IP: 0.0.0.0
   PORT: 5000

@@ -13,37 +13,35 @@ import yaml
 
 from libs import TempServer
 from libs import TempClient
+from libs import Utils
 
-class Server_Thread(object):
+class Server_UnitTests(object):
 
     def __init__(self):
-        self.config = {}
-        # This counts on this service being run from make
-        configFilePath = "{}/config.yaml".format(os.environ.get('PWD'))
-        # Load the configuration file and set the defaults for the code
-        try:
-            print(configFilePath)
-            with open(configFilePath) as file:
-                self.config = yaml.load(file)
-                print(self.config)
-        except Exception as e:
-            print(e)
-            print("Warning: No 'config.yaml' present.")
+        self.config = Utils.load_config()
+        self.ts = None
         
-    def start_server(self):
+    def start(self):
         testServerConfig = self.config.get('TESTSERVER', {})
-        ts = TempServer.TempServer(testServerConfig.get("IP"),
-                                   testServerConfig.get("PORT"),
-                                   testServerConfig.get("TSIP"),
-                                   testServerConfig.get("TSPORT"),
-                                   testServerConfig.get("POLLTIME"),
-                                   testServerConfig.get("DELTA"))
-        ts.start()
+        self.ts = TempServer.TempServer(testServerConfig.get("IP"),
+                                        testServerConfig.get("PORT"),
+                                        testServerConfig.get("TSIP"),
+                                        testServerConfig.get("TSPORT"),
+                                        testServerConfig.get("POLLTIME"),
+                                        testServerConfig.get("DELTA"))
+        print("Starting server.")
+        self.ts.start()
+        print("Sleeping for a 10 seconds.")
+        time.sleep(10)
+        if (not self.ts.is_alive()):
+            print("Server crashed")
+            exit(1)
+        print("Shutting down server.")
+        self.ts.shutdown()
+        self.ts.join()
 
 if __name__ == "__main__":
-    tc = Server_Thread()
-    print("Starting server...")
-    serverThread = threading.Thread(target=tc.start_server)
-    serverThread.start()
-    serverThread.join()
+    tc = Server_UnitTests()
+    tc.start()
+    
 

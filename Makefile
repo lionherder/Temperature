@@ -17,7 +17,7 @@ client:
 
 test:
 	. env/bin/activate
-	python3 src/test/Server_UnitTest.py
+	python3 src/test/Client_UnitTest.py
 
 clean:
 	rm -rf $(PROJECT)

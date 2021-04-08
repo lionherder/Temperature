@@ -1,4 +1,6 @@
+import sys
 import json
+import threading
 import requests
 import select
 import socket
@@ -9,9 +11,10 @@ Remote clients can connect to receive updates.  Simple and to the
 point using low level networking.
 '''
 
-class TempServer(object):
+class TempServer(threading.Thread):
 
     def __init__(self, ip, port, ts_ip, ts_port, poll_time=1, delta=0.0):
+        super().__init__()
         self.IP = ip
         self.PORT = port
         self.TS_IP = ts_ip
@@ -19,8 +22,10 @@ class TempServer(object):
         self.POLL_TIME = poll_time
         self.DELTA = delta  # Change before an update is done
 
+        self.done = False
         self.input_conns = []
         self.lastTemp = 0.0
+        self.pushTemp = 0.0  # To handle to PUSH command
 
         print("IP: {}".format(self.IP))
         print("PORT: {}".format(self.PORT))
@@ -30,10 +35,16 @@ class TempServer(object):
         print("DELTA: {}".format(self.DELTA))
 
         
-    '''
+    ''' 
     Check if the temperature has changed enough to push out another
-    update
+    update.  Unfortunately, weather info services charge after a
+    number of APIs so I took a response and made a cannned json.
     '''
+    def load_temp(self):
+        # Canned response
+        resp = json.loads('{"coord":{"lon":-121.895,"lat":37.3394},"weather":[{"id":804,"main":"Clouds","description":"overcast clouds","icon":"04d"}],"base":"stations","main":{"temp":300.0,"feels_like":287.96,"temp_min":287.04,"temp_max":290.93,"pressure":1021,"humidity":55},"visibility":10000,"wind":{"speed":8.23,"deg":330},"clouds":{"all":90},"dt":1617495941,"sys":{"type":1,"id":5845,"country":"US","sunrise":1617457765,"sunset":1617503500},"timezone":-25200,"id":5392171,"name":"San Jose","cod":200}')
+        self.lastTemp = resp['main']['temp']
+        
     def update_temp(self):
         '''
         url = "https://community-open-weather-map.p.rapidapi.com/weather"
@@ -48,28 +59,25 @@ class TempServer(object):
         
         print(response.text)
         '''
-
-        # Canned response
-        resp = json.loads('{"coord":{"lon":-121.895,"lat":37.3394},"weather":[{"id":804,"main":"Clouds","description":"overcast clouds","icon":"04d"}],"base":"stations","main":{"temp":288.89,"feels_like":287.96,"temp_min":287.04,"temp_max":290.93,"pressure":1021,"humidity":55},"visibility":10000,"wind":{"speed":8.23,"deg":330},"clouds":{"all":90},"dt":1617495941,"sys":{"type":1,"id":5845,"country":"US","sunrise":1617457765,"sunset":1617503500},"timezone":-25200,"id":5392171,"name":"San Jose","cod":200}')
-
-        temp = resp['main']['temp']
-
-        if (abs(temp - self.lastTemp) > self.DELTA):
-            self.lastTemp = temp
-            return True
+        if (self.pushTemp > 0.0):
+            if (abs(self.pushTemp - self.lastTemp) > self.DELTA):
+                self.lastTemp = self.pushTemp
+                self.pushTemp = 0.0
+                return True
         return False
 
     '''
     Main routine for handling and updating clients
     '''
-    def start(self):
+    def run(self):
+        print("Started Server")
         # Set up the server socket stuff
         ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM | socket.SOCK_NONBLOCK)
         ss.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         ss.bind((self.IP, self.PORT))
         ss.listen(10)
-
-        while True:
+        self.load_temp()
+        while not self.done:
             # Check for change in time
             doUpdate = self.update_temp()
             msg = "{} @ {}\n".format(self.lastTemp, time.ctime())
@@ -108,10 +116,12 @@ class TempServer(object):
                         print("Got data: {}".format(data))
                         if (data.find("PUSH") > -1):
                             (command, temp) = data.split(" ")
-                            self.lastTemp = int(temp)
+                            self.pushTemp = float(temp)
                             print("{} -> {}".format(command, temp))
                         elif (data.find("SHUTDOWN") > -1):
-                            print(data)
+                            print("Shutting down")
+                            self.shutdown()
+                            ss.close()
                             return
 
                 # Check if the connection is writable.  If it's all
@@ -120,3 +130,14 @@ class TempServer(object):
                     conn.send(msg.encode())
 
             time.sleep(self.POLL_TIME)
+
+
+    def push(self, temp):
+        print("Push temp")
+        self.pushTemp = temp
+        
+    def shutdown(self):
+        print("Shutdown called.  Stopping server.")
+        for conn in self.input_conns:
+            conn.close()
+        self.done = True

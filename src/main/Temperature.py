@@ -1,26 +1,22 @@
 #!/bin/python3.6m
 
 import os
+import sys
+lib_path = "{}/src/main".format(os.environ.get("PWD"))
+print(lib_path)
+sys.path.append(lib_path)
 import argparse
 import yaml
 
 from libs import TempServer
 from libs import TempClient
+from libs import Utils
 
 if __name__ == '__main__':
     config = {}
 
-    # Trying to get the config path
-    configFilePath = "{}/config.yaml".format(os.environ.get('PWD'))
     # Load the configuration file and set the defaults for the code
-    try:
-        print(configFilePath)
-        with open(configFilePath) as file:
-            config = yaml.load(file)
-            print(config)
-    except Exception as e:
-        print(e)
-        print("Warning: No 'config.yaml' present.")
+    config = Utils.load_config()
         
     serverConfig = config.get('SERVER', {})
     clientConfig = config.get('CLIENT', {})
@@ -42,7 +38,6 @@ if __name__ == '__main__':
     parser_client.add_argument("--port", help="Client port", type=int, default=clientConfig.get('PORT', 5000), required=False)
 
     args = parser.parse_args()
-    # print(args)
 
     if (not args.mode):
         parser.print_help()
